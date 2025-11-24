@@ -1,0 +1,40 @@
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const crypto = require('crypto');
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Simple token generator
+function generateToken() {
+  return crypto.randomBytes(16).toString('hex');
+}
+
+const activeTokens = new Set();
+
+app.get('/auth', (req, res) => {
+  const token = generateToken();
+  activeTokens.add(token);
+  res.json({ token });
+});
+
+wss.on('connection', (ws, req) => {
+  const params = new URLSearchParams(req.url.replace('/?', ''));
+  const token = params.get('token');
+
+  if (!activeTokens.has(token)) {
+    ws.close();
+    return;
+  }
+
+  ws.on('message', (msg) => {
+    console.log(`Received: ${msg}`);
+    ws.send(`Echo: ${msg}`);
+  });
+});
+
+server.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+});
