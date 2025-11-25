@@ -1,55 +1,30 @@
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const crypto = require('crypto');
+// server.js
+const http = require("http");
+const WebSocket = require("ws");
 
-const app = express();
-const server = http.createServer(app);
+// Create a plain HTTP server
+const server = http.createServer();
+
+// Attach WebSocket server to it
 const wss = new WebSocket.Server({ server });
 
-// Simple token generator
-function generateToken() {
-  return crypto.randomBytes(16).toString('hex');
-}
+wss.on("connection", (ws) => {
+  console.log("Client connected");
 
-const activeTokens = new Set();
+  // Handle incoming messages
+  ws.on("message", (msg) => {
+    console.log("Received:", msg.toString());
+    // Echo back to client
+    ws.send("Echo: " + msg);
+  });
 
-app.get('/auth', (req, res) => {
-  const token = generateToken();
-  activeTokens.add(token);
-  res.json({ token });
-});
-
-wss.on('connection', (ws, req) => {
-  const params = new URLSearchParams(req.url.replace('/?', ''));
-  const token = params.get('token');
-
-  if (!activeTokens.has(token)) {
-    ws.close();
-    return;
-  }
-
-  ws.on('message', (msg) => {
-    console.log(`Received: ${msg}`);
-    try {
-      const data = JSON.parse(msg);
-      if (data.cmd === 'handshake') {
-        ws.send(JSON.stringify({
-          cmd: 'handshake',
-          val: { accepted: true },
-          listener: data.listener
-        }));
-      } else {
-        ws.send(`Echo: ${msg}`);
-      }
-    } catch (e) {
-      ws.send(`Echo: ${msg}`);
-    }
+  ws.on("close", () => {
+    console.log("Client disconnected");
   });
 });
 
-// Use Render’s dynamic port
+// Render provides PORT via environment variable
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`WebSocket server running on port ${PORT}`);
 });
