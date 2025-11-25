@@ -1,11 +1,12 @@
 {
   "name": "u3dpsa",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "server.js.txt",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js.txt"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "ws": "^8.18.0"
   }
 }
