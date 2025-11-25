@@ -31,11 +31,24 @@ wss.on('connection', (ws, req) => {
 
   ws.on('message', (msg) => {
     console.log(`Received: ${msg}`);
-    ws.send(`Echo: ${msg}`);
+    try {
+      const data = JSON.parse(msg);
+      if (data.cmd === 'handshake') {
+        ws.send(JSON.stringify({
+          cmd: 'handshake',
+          val: { accepted: true },
+          listener: data.listener
+        }));
+      } else {
+        ws.send(`Echo: ${msg}`);
+      }
+    } catch (e) {
+      ws.send(`Echo: ${msg}`);
+    }
   });
 });
 
-// ✅ Use Render’s dynamic port
+// Use Render’s dynamic port
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
